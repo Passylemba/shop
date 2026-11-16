@@ -1,14 +1,23 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Search, ShoppingBag, Minus, Plus, Sparkles, ShieldCheck, Truck } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { useMemo, useState, type FormEvent } from "react";
+import { Search, ShoppingBag, Minus, Plus, Sparkles, ShieldCheck, Truck, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 import heroImg from "@/assets/hero-ankara.jpg";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { departments, formatRand, products, visibleProducts, type Filter, type Product } from "@/lib/catalog";
+import { formatRand, visibleProducts, type Filter, type Product } from "@/lib/catalog";
+import { useProductImages } from "@/lib/product-images";
+import { getStorefront, placeOrder } from "@/lib/shop.functions";
+
+const storefrontQuery = queryOptions({ queryKey: ["storefront"], queryFn: () => getStorefront() });
 
 export const Route = createFileRoute("/")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(storefrontQuery),
   head: () => ({
     meta: [
       { title: "Tsholo Couture Demo | African Women's Fashion & Accessories" },
@@ -25,12 +34,20 @@ export const Route = createFileRoute("/")({
 type CartLine = Product & { qty: number };
 
 function Shop() {
+  const { data } = useSuspenseQuery(storefrontQuery);
+  const { products, departments } = data;
+  const images = useProductImages(products);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [bagOpen, setBagOpen] = useState(false);
+  const [step, setStep] = useState<"bag" | "details" | "done">("bag");
+  const [placed, setPlaced] = useState<{ orderNumber: number; total: number } | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  const list = useMemo(() => visibleProducts(filter, query), [filter, query]);
+  const list = useMemo(() => visibleProducts(products, departments, filter, query), [products, departments, filter, query]);
+  const newArrivals = useMemo(() => visibleProducts(products, departments, "new").slice(0, 4), [products, departments]);
+  const openDepts = departments.filter((d) => d.enabled);
   const count = cart.reduce((n, l) => n + l.qty, 0);
   const total = cart.reduce((n, l) => n + l.qty * l.price, 0);
 
@@ -42,17 +59,69 @@ function Shop() {
     toast.success(`${p.name} added to your bag`);
   };
   const change = (id: string, delta: number) =>
-    setCart((c) => c.map((l) => (l.id === id ? { ...l, qty: l.qty + delta } : l)).filter((l) => l.qty > 0));
+    setCart((c) => c.map((l) => (l.id === id ? { ...l, qty: Math.min(20, l.qty + delta) } : l)).filter((l) => l.qty > 0));
 
   const pick = (f: Filter) => {
     setFilter(f);
     document.getElementById("collection")?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const openBag = () => {
+    if (step === "done") setStep("bag");
+    setBagOpen(true);
+  };
+
+  const submitOrder = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    setBusy(true);
+    try {
+      const res = await placeOrder({
+        data: {
+          customer_name: String(f.get("name") ?? ""),
+          phone: String(f.get("phone") ?? ""),
+          email: String(f.get("email") ?? ""),
+          address: String(f.get("address") ?? ""),
+          notes: String(f.get("notes") ?? ""),
+          lines: cart.map((l) => ({ productId: l.id, qty: l.qty })),
+        },
+      });
+      setPlaced(res);
+      setCart([]);
+      setStep("done");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      toast.error(msg.startsWith("[") ? "Please check your details and try again." : msg || "Something went wrong");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const card = (p: Product) => (
+    <article key={p.id} className="group flex flex-col overflow-hidden border border-border bg-card transition-shadow hover:shadow-card">
+      <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+        {images[p.id] && (
+          <img src={images[p.id]} alt={p.name} width={800} height={1008} loading="lazy" className="size-full object-cover transition-transform duration-700 group-hover:scale-105" />
+        )}
+        {(p.tag || p.is_new_arrival) && (
+          <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider">
+            {p.tag || "New"}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-3 md:p-4">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-gold">{p.fabric} · {p.origin}</p>
+        <h3 className="mt-1 flex-1 text-lg font-semibold leading-snug md:text-xl">{p.name}</h3>
+        <p className="mt-2 font-semibold">{formatRand(p.price)}</p>
+        <Button variant="gold" className="mt-3 w-full" onClick={() => add(p)}>Add to bag</Button>
+      </div>
+    </article>
+  );
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-ink py-2.5 text-center text-gold-soft eyebrow">
-        African fashion · Secure checkout coming soon · South Africa
+      <div className="bg-gold-soft py-2.5 text-center text-foreground eyebrow">
+        African fashion · Order now, pay on confirmation · South Africa
       </div>
 
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
@@ -67,37 +136,29 @@ function Shop() {
           <label className="order-3 flex w-full items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 md:order-none md:ml-auto md:w-80">
             <Search className="size-4 text-muted-foreground" />
             <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search Ankara, Shweshwe, Kente…"
-              aria-label="Search products"
+              type="search" value={query} onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search Ankara, Shweshwe, Kente…" aria-label="Search products"
               className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </label>
-          <Button variant="bag" size="default" className="ml-auto md:ml-0" onClick={() => setBagOpen(true)}>
+          <Button variant="bag" size="default" className="ml-auto md:ml-0" onClick={openBag}>
             <ShoppingBag /> Bag ({count})
           </Button>
         </div>
-        <nav aria-label="Departments" className="bg-ink">
+        <nav aria-label="Departments" className="border-t border-border bg-cream">
           <div className="mx-auto flex max-w-7xl flex-wrap justify-center gap-2 px-5 py-3">
+            <button onClick={() => pick("new")} className="rounded-full border border-gold/50 px-4 py-1.5 text-sm font-semibold text-foreground transition-colors hover:bg-gold hover:text-gold-foreground">
+              New arrivals
+            </button>
             {departments.map((d) =>
               d.enabled ? (
-                <button
-                  key={d.id}
-                  onClick={() => pick(d.id)}
-                  className="rounded-full border border-gold/40 px-4 py-1.5 text-sm text-ink-foreground transition-colors hover:bg-gold hover:text-gold-foreground"
-                >
+                <button key={d.id} onClick={() => pick(d.id)} className="rounded-full border border-gold/50 px-4 py-1.5 text-sm text-foreground transition-colors hover:bg-gold hover:text-gold-foreground">
                   {d.label}
                 </button>
               ) : (
-                <span
-                  key={d.id}
-                  aria-disabled="true"
-                  className="flex items-center gap-2 rounded-full border border-ink-foreground/15 px-4 py-1.5 text-sm text-ink-foreground/40"
-                >
+                <span key={d.id} aria-disabled="true" className="flex items-center gap-2 rounded-full border border-border px-4 py-1.5 text-sm text-muted-foreground/70">
                   {d.label}
-                  <span className="rounded-full bg-ink-foreground/10 px-2 py-0.5 text-[0.6rem] uppercase tracking-wider">Soon</span>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[0.6rem] uppercase tracking-wider">Soon</span>
                 </span>
               ),
             )}
@@ -106,77 +167,78 @@ function Shop() {
       </header>
 
       <main>
-        <section className="relative overflow-hidden bg-ink">
+        <section className="relative overflow-hidden bg-cream">
           <img src={heroImg} alt="Woman in a South African Ankara print gown" width={1600} height={1008} className="absolute inset-0 size-full object-cover object-[70%_center]" />
           <div className="absolute inset-0 bg-hero-fade" />
           <div className="relative mx-auto flex min-h-[560px] max-w-7xl items-center px-5 py-20 md:px-10">
-            <div className="max-w-xl animate-rise text-ink-foreground">
+            <div className="max-w-xl animate-rise text-foreground">
               <p className="eyebrow text-gold">Celebrating African style</p>
               <h1 className="mt-4 text-5xl font-bold leading-[1.02] md:text-7xl">
                 Wear your story.
                 <br />
                 <em className="text-gold">Live your culture.</em>
               </h1>
-              <p className="mt-6 max-w-md leading-relaxed text-ink-foreground/80">
+              <p className="mt-6 max-w-md leading-relaxed text-foreground/75">
                 South African Ankara and Shweshwe pieces, with treasured prints from across the continent — made for the women who wear them proudly.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button variant="gold" size="xl" onClick={() => pick("women")}>Shop women</Button>
-                <Button variant="bag" size="xl" className="border-gold/60 bg-transparent text-ink-foreground" onClick={() => pick("accessories")}>
-                  Accessories
-                </Button>
+                <Button variant="bag" size="xl" className="bg-background/70" onClick={() => pick("accessories")}>Accessories</Button>
               </div>
             </div>
           </div>
         </section>
         <div className="kente-rule" />
 
+        {newArrivals.length > 0 && (
+          <section className="bg-cream">
+            <div className="mx-auto max-w-7xl px-5 py-14 md:px-10">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="eyebrow text-gold">Just landed</p>
+                  <h2 className="mt-2 text-4xl font-bold">New arrivals</h2>
+                </div>
+                <button onClick={() => pick("new")} className="text-sm font-semibold text-gold underline-offset-4 hover:underline">See all new pieces</button>
+              </div>
+              <div className="mt-8 grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-4">
+                {newArrivals.map((p) => card(p))}
+              </div>
+            </div>
+          </section>
+        )}
+
         <section id="collection" className="mx-auto max-w-7xl scroll-mt-32 px-5 py-16 md:px-10">
           <div className="text-center">
             <p className="eyebrow text-gold">The collection</p>
             <h2 className="mt-2 text-4xl font-bold md:text-5xl">Shop African fashion</h2>
-            <p className="mt-3 text-muted-foreground">Women's clothing and accessories · Men & Kids arriving soon</p>
+            <p className="mt-3 text-muted-foreground">
+              {openDepts.map((d) => d.label).join(" & ")}
+              {departments.some((d) => !d.enabled) && ` · ${departments.filter((d) => !d.enabled).map((d) => d.label).join(" & ")} arriving soon`}
+            </p>
           </div>
 
           <div className="my-8 flex flex-wrap justify-center gap-2">
-            {(["all", ...departments.filter((d) => d.enabled).map((d) => d.id)] as Filter[]).map((f) => (
+            {(["all", "new", ...openDepts.map((d) => d.id)] as Filter[]).map((f) => (
               <Button key={f} variant="chip" size="sm" className="h-9 rounded-full px-5" data-active={filter === f} onClick={() => setFilter(f)}>
-                {f === "all" ? `All (${visibleProducts("all").length})` : departments.find((d) => d.id === f)?.label}
+                {f === "all" ? `All (${visibleProducts(products, departments).length})` : f === "new" ? "New arrivals" : departments.find((d) => d.id === f)?.label}
               </Button>
             ))}
           </div>
 
           {list.length ? (
             <div className="grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-4">
-              {list.map((p) => (
-                <article key={p.id} className="group flex flex-col overflow-hidden border border-border bg-card transition-shadow hover:shadow-card">
-                  <div className="relative aspect-[4/5] overflow-hidden bg-muted">
-                    <img src={p.image} alt={p.name} width={800} height={1008} loading="lazy" className="size-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                    <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider">
-                      {p.tag}
-                    </span>
-                  </div>
-                  <div className="flex flex-1 flex-col p-3 md:p-4">
-                    <p className="text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-gold">
-                      {p.fabric} · {p.origin}
-                    </p>
-                    <h3 className="mt-1 flex-1 text-lg font-semibold leading-snug md:text-xl">{p.name}</h3>
-                    <p className="mt-2 font-semibold">{formatRand(p.price)}</p>
-                    <Button variant="gold" className="mt-3 w-full" onClick={() => add(p)}>Add to bag</Button>
-                  </div>
-                </article>
-              ))}
+              {list.map((p) => card(p))}
             </div>
           ) : (
-            <p className="py-16 text-center text-muted-foreground">No pieces match “{query}”.</p>
+            <p className="py-16 text-center text-muted-foreground">{query ? `No pieces match “${query}”.` : "No pieces here yet."}</p>
           )}
         </section>
 
-        <section className="bg-cream">
+        <section className="bg-sand/60">
           <div className="mx-auto grid max-w-7xl gap-8 px-5 py-12 text-center sm:grid-cols-3 md:px-10">
             {[
               { icon: Sparkles, t: "Culture-led style", s: "African inspiration, modern expression" },
-              { icon: ShieldCheck, t: "Secure payments", s: "Payment gateway connected before launch" },
+              { icon: ShieldCheck, t: "Pay on confirmation", s: "Online payments coming soon" },
               { icon: Truck, t: "Delivery options", s: "Shipping across South Africa" },
             ].map(({ icon: Icon, t, s }) => (
               <div key={t}>
@@ -190,40 +252,68 @@ function Shop() {
       </main>
 
       <div className="kente-rule" />
-      <footer className="bg-ink py-10 text-center">
+      <footer className="bg-cream py-10 text-center">
         <p className="font-display text-2xl tracking-[0.15em] text-gold">TSHOLO COUTURE DEMO</p>
-        <p className="mt-2 text-sm text-ink-foreground/70">Wear African. Live African. Be Proud.</p>
-        <p className="mt-4 text-xs text-ink-foreground/40">{products.length} demo pieces · Men & Kids departments coming soon</p>
+        <p className="mt-2 text-sm text-muted-foreground">Wear African. Live African. Be Proud.</p>
+        <Link to="/admin" className="mt-4 inline-block text-xs text-muted-foreground underline-offset-4 hover:underline">Owner sign in</Link>
       </footer>
 
       <Sheet open={bagOpen} onOpenChange={setBagOpen}>
         <SheetContent className="flex w-full flex-col sm:max-w-md">
           <SheetHeader>
-            <SheetTitle className="font-display text-2xl">Your bag</SheetTitle>
+            <SheetTitle className="font-display text-2xl">
+              {step === "details" ? "Your details" : step === "done" ? "Order received" : "Your bag"}
+            </SheetTitle>
           </SheetHeader>
-          <div className="flex-1 space-y-4 overflow-y-auto">
-            {cart.length === 0 && <p className="py-10 text-center text-muted-foreground">Your bag is empty.</p>}
-            {cart.map((l) => (
-              <div key={l.id} className="flex gap-3 border-b border-border pb-4">
-                <img src={l.image} alt={l.name} className="h-20 w-16 object-cover" />
-                <div className="flex-1">
-                  <p className="font-display text-lg leading-tight">{l.name}</p>
-                  <p className="text-xs text-muted-foreground">{l.fabric}</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Button variant="outline" size="icon" className="size-7" aria-label="Remove one" onClick={() => change(l.id, -1)}><Minus /></Button>
-                    <span className="w-5 text-center text-sm">{l.qty}</span>
-                    <Button variant="outline" size="icon" className="size-7" aria-label="Add one" onClick={() => change(l.id, 1)}><Plus /></Button>
-                  </div>
-                </div>
-                <p className="font-semibold">{formatRand(l.price * l.qty)}</p>
+
+          {step === "done" && placed ? (
+            <div className="flex flex-1 flex-col items-center justify-center text-center">
+              <CheckCircle2 className="size-12 text-gold" />
+              <p className="mt-4 font-display text-3xl font-bold">Thank you!</p>
+              <p className="mt-2 text-muted-foreground">Order #{placed.orderNumber} · {formatRand(placed.total)}</p>
+              <p className="mt-4 max-w-xs text-sm text-muted-foreground">We'll contact you to confirm your order and arrange payment and delivery.</p>
+              <Button variant="gold" className="mt-6" onClick={() => { setBagOpen(false); setStep("bag"); }}>Keep shopping</Button>
+            </div>
+          ) : step === "details" ? (
+            <form onSubmit={submitOrder} className="flex flex-1 flex-col gap-4 overflow-y-auto px-1">
+              <div className="space-y-1.5"><Label htmlFor="o-name">Full name</Label><Input id="o-name" name="name" required minLength={2} maxLength={100} /></div>
+              <div className="space-y-1.5"><Label htmlFor="o-phone">Phone (WhatsApp)</Label><Input id="o-phone" name="phone" type="tel" required minLength={7} maxLength={20} /></div>
+              <div className="space-y-1.5"><Label htmlFor="o-email">Email (optional)</Label><Input id="o-email" name="email" type="email" maxLength={255} /></div>
+              <div className="space-y-1.5"><Label htmlFor="o-address">Delivery address</Label><Textarea id="o-address" name="address" required minLength={5} maxLength={500} /></div>
+              <div className="space-y-1.5"><Label htmlFor="o-notes">Notes (size, colour…)</Label><Textarea id="o-notes" name="notes" maxLength={500} /></div>
+              <div className="mt-auto space-y-3 border-t border-border pt-4">
+                <div className="flex justify-between text-lg font-semibold"><span>Total</span><span>{formatRand(total)}</span></div>
+                <Button type="submit" variant="gold" size="xl" className="w-full" disabled={busy}>{busy ? "Placing order…" : "Place order"}</Button>
+                <Button type="button" variant="ghost" className="w-full" onClick={() => setStep("bag")}>Back to bag</Button>
+                <p className="bg-accent p-3 text-xs text-muted-foreground">No payment is taken now — we'll confirm with you first.</p>
               </div>
-            ))}
-          </div>
-          <div className="space-y-3 border-t border-border pt-4">
-            <div className="flex justify-between text-lg font-semibold"><span>Total</span><span>{formatRand(total)}</span></div>
-            <Button variant="gold" size="xl" className="w-full" disabled>Checkout coming soon</Button>
-            <p className="bg-accent p-3 text-xs text-muted-foreground">Demo only — no orders or payments are processed yet.</p>
-          </div>
+            </form>
+          ) : (
+            <>
+              <div className="flex-1 space-y-4 overflow-y-auto">
+                {cart.length === 0 && <p className="py-10 text-center text-muted-foreground">Your bag is empty.</p>}
+                {cart.map((l) => (
+                  <div key={l.id} className="flex gap-3 border-b border-border pb-4">
+                    {images[l.id] ? <img src={images[l.id]} alt={l.name} className="h-20 w-16 object-cover" /> : <div className="h-20 w-16 bg-muted" />}
+                    <div className="flex-1">
+                      <p className="font-display text-lg leading-tight">{l.name}</p>
+                      <p className="text-xs text-muted-foreground">{l.fabric}</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <Button variant="outline" size="icon" className="size-7" aria-label="Remove one" onClick={() => change(l.id, -1)}><Minus /></Button>
+                        <span className="w-5 text-center text-sm">{l.qty}</span>
+                        <Button variant="outline" size="icon" className="size-7" aria-label="Add one" onClick={() => change(l.id, 1)}><Plus /></Button>
+                      </div>
+                    </div>
+                    <p className="font-semibold">{formatRand(l.price * l.qty)}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-3 border-t border-border pt-4">
+                <div className="flex justify-between text-lg font-semibold"><span>Total</span><span>{formatRand(total)}</span></div>
+                <Button variant="gold" size="xl" className="w-full" disabled={!cart.length} onClick={() => setStep("details")}>Checkout</Button>
+              </div>
+            </>
+          )}
         </SheetContent>
       </Sheet>
     </div>

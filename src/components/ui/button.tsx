@@ -17,7 +17,7 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         gold: "bg-gold text-gold-foreground font-semibold tracking-wide shadow-gold hover:bg-gold/90 rounded-sm",
-        chip: "rounded-full border border-border bg-card text-foreground hover:border-gold data-[active=true]:bg-ink data-[active=true]:text-gold data-[active=true]:border-ink",
+        chip: "rounded-full border border-border bg-card text-foreground hover:border-gold data-[active=true]:bg-gold data-[active=true]:text-gold-foreground data-[active=true]:border-gold",
         bag: "rounded-full border border-gold/50 bg-card text-foreground hover:bg-gold hover:text-gold-foreground",
       },
       size: {
