@@ -1,14 +1,16 @@
-# Welcome to your Lovable project
+# Tsholo Couture Boutique
+
+USE THE NAME OF TSHOLO COUTURE DEMO USE SOME MOCK DATA PHOTO OF SOUTHAFRICAN ANKARA CLOTHS WITH FEW OF OTHERNAFRICAN CLOTHS FOR NOW USE ONLY MAIN WOMEN ACCESSORIES THE OTHER DEPARTMENT WILL BE ENABLE ONCE I HAVE THOSE PRODUCT
 
 This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/f554ce59-a2c8-4351-8aa7-69d174d6dda8).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 
@@ -20,10 +22,3 @@ cd <repository-name>
 npm i
 npm run dev
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
