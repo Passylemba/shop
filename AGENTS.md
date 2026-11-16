@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+<!-- AGENT-MEMORY:BEGIN -->
+- Product catalogue and department on/off switches live in `src/lib/catalog.ts` (static mock data, no backend yet); the shop page only reads through `visibleProducts` so closed departments never leak into the grid. Why: one place to add real products/enable departments later.
+<!-- AGENT-MEMORY:END -->
