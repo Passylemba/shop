@@ -1,6 +1,6 @@
 /** Shop rules shared by the storefront, checkout and admin. Data itself lives in Lovable Cloud. */
 
-export type DepartmentId = "women" | "accessories" | "men" | "kids" | (string & {});
+export type DepartmentId = "women" | "accessories" | "men" | "kids" | "family" | (string & {});
 
 export interface Department {
   id: DepartmentId;

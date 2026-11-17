@@ -21,10 +21,10 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(storefrontQuery),
   head: () => ({
     meta: [
-      { title: "Tsholo R Fashion House | African Women's Fashion & Accessories" },
-      { name: "description", content: "Shop South African Shweshwe and Ankara dresses, Kente, Mudcloth and handmade African accessories. Wear African. Live African." },
-      { property: "og:title", content: "Tsholo R Fashion House | African Women's Fashion" },
-      { property: "og:description", content: "South African Ankara & Shweshwe dresses plus African accessories — wear your story." },
+      { title: "Tsholo R Fashion House | African Fashion for Women, Men & Family" },
+      { name: "description", content: "Shop South African Shweshwe and Ankara for women, men and matching family sets, plus Kente, Mudcloth and handmade African accessories." },
+      { property: "og:title", content: "Tsholo R Fashion House | African Fashion for the Whole Family" },
+      { property: "og:description", content: "South African Ankara & Shweshwe for women, men and matching family sets — wear your story." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -176,11 +176,12 @@ function Shop() {
                 <em className="text-gold">Live your culture.</em>
               </h1>
               <p className="mt-6 max-w-md leading-relaxed text-foreground/75">
-                South African Ankara and Shweshwe pieces, with treasured prints from across the continent — made for the women who wear them proudly.
+                South African Ankara and Shweshwe pieces, with treasured prints from across the continent — made for women, men and whole families who wear them proudly.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button variant="gold" size="xl" onClick={() => pick("women")}>Shop women</Button>
-                <Button variant="bag" size="xl" className="bg-background/70" onClick={() => pick("accessories")}>Accessories</Button>
+                {openDepts.some((d) => d.id === "men") && <Button variant="bag" size="xl" className="bg-background/70" onClick={() => pick("men")}>Shop men</Button>}
+                {openDepts.some((d) => d.id === "family") && <Button variant="bag" size="xl" className="bg-background/70" onClick={() => pick("family")}>Family sets</Button>}
               </div>
             </div>
           </div>
