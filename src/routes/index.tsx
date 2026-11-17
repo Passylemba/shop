@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState, type FormEvent } from "react";
-import { Search, ShoppingBag, Minus, Plus, Sparkles, ShieldCheck, Truck, CheckCircle2 } from "lucide-react";
+import { Search, ShoppingBag, Minus, Plus, Sparkles, ShieldCheck, Truck, CheckCircle2, MapPin, Phone, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import heroImg from "@/assets/hero-ankara.jpg";
@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { formatRand, visibleProducts, type Filter, type Product } from "@/lib/catalog";
 import { useProductImages } from "@/lib/product-images";
 import { getStorefront, placeOrder } from "@/lib/shop.functions";
+import { SHOP_CONTACT, telLink, whatsappLink } from "@/lib/contact";
 
 const storefrontQuery = queryOptions({ queryKey: ["storefront"], queryFn: () => getStorefront() });
 
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Tsholo R Fashion House | African Fashion for Women, Men & Family" },
-      { name: "description", content: "Shop South African Shweshwe and Ankara for women, men and matching family sets, plus Kente, Mudcloth and handmade African accessories." },
+      { name: "description", content: "Shop South African Shweshwe and Ankara for women, men, kids and matching family sets, plus Kente, Mudcloth and handmade African accessories." },
       { property: "og:title", content: "Tsholo R Fashion House | African Fashion for the Whole Family" },
       { property: "og:description", content: "South African Ankara & Shweshwe for women, men and matching family sets — wear your story." },
       { property: "og:type", content: "website" },
@@ -176,11 +177,12 @@ function Shop() {
                 <em className="text-gold">Live your culture.</em>
               </h1>
               <p className="mt-6 max-w-md leading-relaxed text-foreground/75">
-                South African Ankara and Shweshwe pieces, with treasured prints from across the continent — made for women, men and whole families who wear them proudly.
+                South African Ankara and Shweshwe pieces, with treasured prints from across the continent — made for women, men, kids and whole families who wear them proudly.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button variant="gold" size="xl" onClick={() => pick("women")}>Shop women</Button>
                 {openDepts.some((d) => d.id === "men") && <Button variant="bag" size="xl" className="bg-background/70" onClick={() => pick("men")}>Shop men</Button>}
+                {openDepts.some((d) => d.id === "kids") && <Button variant="bag" size="xl" className="bg-background/70" onClick={() => pick("kids")}>Shop kids</Button>}
                 {openDepts.some((d) => d.id === "family") && <Button variant="bag" size="xl" className="bg-background/70" onClick={() => pick("family")}>Family sets</Button>}
               </div>
             </div>
@@ -247,14 +249,55 @@ function Shop() {
             ))}
           </div>
         </section>
+
+        <section id="contact" className="mx-auto max-w-7xl px-5 py-16 md:px-10">
+          <div className="text-center">
+            <p className="eyebrow text-gold">Get in touch</p>
+            <h2 className="mt-2 text-4xl font-bold">Visit or contact us</h2>
+          </div>
+          <div className="mx-auto mt-8 grid max-w-4xl gap-4 sm:grid-cols-3">
+            <div className="border border-border bg-card p-6 text-center">
+              <MapPin className="mx-auto size-6 text-gold" />
+              <p className="mt-3 font-display text-xl font-semibold">Address</p>
+              <address className="mt-2 text-sm not-italic leading-relaxed text-muted-foreground">
+                {SHOP_CONTACT.addressLines.map((l) => <span key={l} className="block">{l}</span>)}
+              </address>
+            </div>
+            <a href={whatsappLink(SHOP_CONTACT.phone, "Hi Tsholo R Fashion House, I'd like to ask about")} target="_blank" rel="noreferrer" className="border border-border bg-card p-6 text-center transition-shadow hover:shadow-card">
+              <MessageCircle className="mx-auto size-6 text-gold" />
+              <p className="mt-3 font-display text-xl font-semibold">WhatsApp</p>
+              <p className="mt-2 text-sm text-muted-foreground">{SHOP_CONTACT.phone}</p>
+              <p className="mt-1 text-xs font-semibold text-gold">Chat with us</p>
+            </a>
+            <a href={telLink(SHOP_CONTACT.phone)} className="border border-border bg-card p-6 text-center transition-shadow hover:shadow-card">
+              <Phone className="mx-auto size-6 text-gold" />
+              <p className="mt-3 font-display text-xl font-semibold">Call us</p>
+              <p className="mt-2 text-sm text-muted-foreground">{SHOP_CONTACT.phone}</p>
+              <p className="mt-1 text-xs font-semibold text-gold">Tap to call</p>
+            </a>
+          </div>
+        </section>
       </main>
 
       <div className="kente-rule" />
       <footer className="bg-cream py-10 text-center">
         <img src={logo.url} alt="Tsholo R Fashion House" width={632} height={276} loading="lazy" className="mx-auto h-24 w-auto" />
         <p className="mt-2 text-sm text-muted-foreground">Wear African. Live African. Be Proud.</p>
+        <p className="mt-4 px-5 text-sm text-muted-foreground">{SHOP_CONTACT.addressLines.join(", ")}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Phone & WhatsApp:{" "}
+          <a href={whatsappLink(SHOP_CONTACT.phone)} target="_blank" rel="noreferrer" className="font-semibold text-gold underline-offset-4 hover:underline">{SHOP_CONTACT.phone}</a>
+        </p>
         <Link to="/admin" className="mt-4 inline-block text-xs text-muted-foreground underline-offset-4 hover:underline">Owner sign in</Link>
       </footer>
+
+      <a
+        href={whatsappLink(SHOP_CONTACT.phone, "Hi Tsholo R Fashion House, I'd like to ask about")}
+        target="_blank" rel="noreferrer" aria-label="Chat with us on WhatsApp"
+        className="fixed bottom-5 right-5 z-30 flex items-center gap-2 rounded-full bg-gold px-4 py-3 text-sm font-semibold text-gold-foreground shadow-card transition-transform hover:scale-105"
+      >
+        <MessageCircle className="size-5" /> <span className="hidden sm:inline">WhatsApp us</span>
+      </a>
 
       <Sheet open={bagOpen} onOpenChange={setBagOpen}>
         <SheetContent className="flex w-full flex-col sm:max-w-md">
@@ -270,6 +313,9 @@ function Shop() {
               <p className="mt-4 font-display text-3xl font-bold">Thank you!</p>
               <p className="mt-2 text-muted-foreground">Order #{placed.orderNumber} · {formatRand(placed.total)}</p>
               <p className="mt-4 max-w-xs text-sm text-muted-foreground">We'll contact you to confirm your order and arrange payment and delivery.</p>
+              <a href={whatsappLink(SHOP_CONTACT.phone, `Hi, I just placed order #${placed.orderNumber}`)} target="_blank" rel="noreferrer" className="mt-3 text-sm font-semibold text-gold underline-offset-4 hover:underline">
+                Questions? WhatsApp us on {SHOP_CONTACT.phone}
+              </a>
               <Button variant="gold" className="mt-6" onClick={() => { setBagOpen(false); setStep("bag"); }}>Keep shopping</Button>
             </div>
           ) : step === "details" ? (
