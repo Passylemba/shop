@@ -5,6 +5,7 @@ import { Search, ShoppingBag, Minus, Plus, Sparkles, ShieldCheck, Truck, CheckCi
 import { toast } from "sonner";
 
 import heroImg from "@/assets/hero-ankara.jpg";
+import logo from "@/assets/tsholo-r-fashion-house-logo.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,9 +21,9 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(storefrontQuery),
   head: () => ({
     meta: [
-      { title: "Tsholo Couture Demo | African Women's Fashion & Accessories" },
+      { title: "Tsholo R Fashion House | African Women's Fashion & Accessories" },
       { name: "description", content: "Shop South African Shweshwe and Ankara dresses, Kente, Mudcloth and handmade African accessories. Wear African. Live African." },
-      { property: "og:title", content: "Tsholo Couture Demo | African Women's Fashion" },
+      { property: "og:title", content: "Tsholo R Fashion House | African Women's Fashion" },
       { property: "og:description", content: "South African Ankara & Shweshwe dresses plus African accessories — wear your story." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -126,12 +127,8 @@ function Shop() {
 
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-5 py-4 md:flex-nowrap md:px-10">
-          <a href="/" className="flex items-center gap-3">
-            <span className="grid size-11 place-items-center rounded-full border-2 border-gold font-display text-lg font-bold text-gold">TC</span>
-            <span>
-              <span className="block font-display text-xl font-bold tracking-[0.12em]">TSHOLO COUTURE</span>
-              <span className="block text-[0.6rem] tracking-[0.2em] text-muted-foreground">DEMO · WEAR AFRICAN. LIVE AFRICAN.</span>
-            </span>
+          <a href="/" className="flex items-center" aria-label="Tsholo R Fashion House home">
+            <img src={logo.url} alt="Tsholo R Fashion House" width={632} height={276} className="h-14 w-auto md:h-20" />
           </a>
           <label className="order-3 flex w-full items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 md:order-none md:ml-auto md:w-80">
             <Search className="size-4 text-muted-foreground" />
@@ -253,7 +250,7 @@ function Shop() {
 
       <div className="kente-rule" />
       <footer className="bg-cream py-10 text-center">
-        <p className="font-display text-2xl tracking-[0.15em] text-gold">TSHOLO COUTURE DEMO</p>
+        <img src={logo.url} alt="Tsholo R Fashion House" width={632} height={276} loading="lazy" className="mx-auto h-24 w-auto" />
         <p className="mt-2 text-sm text-muted-foreground">Wear African. Live African. Be Proud.</p>
         <Link to="/admin" className="mt-4 inline-block text-xs text-muted-foreground underline-offset-4 hover:underline">Owner sign in</Link>
       </footer>

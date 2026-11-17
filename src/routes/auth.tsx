@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import logo from "@/assets/tsholo-r-fashion-house-logo.png.asset.json";
 
 const safePath = (p?: string) => (p && p.startsWith("/") && !p.startsWith("//") ? p : "/admin");
 
@@ -16,10 +17,10 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Owner sign in | Tsholo Couture Demo" },
-      { name: "description", content: "Sign in to manage Tsholo Couture products, orders and staff." },
-      { property: "og:title", content: "Owner sign in | Tsholo Couture Demo" },
-      { property: "og:description", content: "Store owner sign in for Tsholo Couture." },
+      { title: "Owner sign in | Tsholo R Fashion House" },
+      { name: "description", content: "Sign in to manage Tsholo R Fashion House products, orders and staff." },
+      { property: "og:title", content: "Owner sign in | Tsholo R Fashion House" },
+      { property: "og:description", content: "Store owner sign in for Tsholo R Fashion House." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -79,7 +80,7 @@ function AuthPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-cream px-5">
       <div className="w-full max-w-sm border border-border bg-card p-8 shadow-card">
-        <Link to="/" className="mx-auto mb-6 grid size-12 place-items-center rounded-full border-2 border-gold font-display text-lg font-bold text-gold">TC</Link>
+        <Link to="/" className="mb-6 block" aria-label="Back to shop"><img src={logo.url} alt="Tsholo R Fashion House" width={632} height={276} className="mx-auto h-20 w-auto" /></Link>
         <h1 className="text-center text-3xl font-bold">{mode === "signin" ? "Owner sign in" : "Create owner account"}</h1>
         <p className="mt-2 text-center text-sm text-muted-foreground">Manage products, photos, orders and staff.</p>
 

@@ -4,6 +4,7 @@ import { LayoutDashboard, LogOut, Package, Settings, ShoppingCart, Store, Users 
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/tsholo-r-fashion-house-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: async ({ context }) => {
@@ -12,10 +13,10 @@ export const Route = createFileRoute("/_authenticated/admin")({
   },
   head: () => ({
     meta: [
-      { title: "Store admin | Tsholo Couture Demo" },
-      { name: "description", content: "Manage Tsholo Couture products, photos, orders and staff." },
-      { property: "og:title", content: "Store admin | Tsholo Couture Demo" },
-      { property: "og:description", content: "Owner dashboard for Tsholo Couture." },
+      { title: "Store admin | Tsholo R Fashion House" },
+      { name: "description", content: "Manage Tsholo R Fashion House products, photos, orders and staff." },
+      { property: "og:title", content: "Store admin | Tsholo R Fashion House" },
+      { property: "og:description", content: "Owner dashboard for Tsholo R Fashion House." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -62,12 +63,9 @@ function AdminLayout() {
   return (
     <div className="min-h-screen bg-cream md:flex">
       <aside className="border-b border-border bg-card md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0 md:border-b-0 md:border-r">
-        <div className="flex items-center gap-3 px-5 py-5">
-          <span className="grid size-10 place-items-center rounded-full border-2 border-gold font-display font-bold text-gold">TC</span>
-          <div>
-            <p className="font-display text-lg font-bold leading-none tracking-wider">TSHOLO</p>
-            <p className="text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground">Store admin</p>
-          </div>
+        <div className="px-5 py-4">
+          <img src={logo.url} alt="Tsholo R Fashion House" width={632} height={276} className="h-12 w-auto" />
+          <p className="mt-1 text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground">Store admin</p>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:pb-0">
           {nav.map(({ to, label, icon: Icon, ...rest }) => (
