@@ -3,7 +3,7 @@ import { SHOP_CONTACT, whatsappLink } from "./contact";
 
 describe("contact", () => {
   it("WhatsApp link uses the shop phone number with the +27 country code", () => {
-    expect(whatsappLink(SHOP_CONTACT.phone)).toBe("https://wa.me/276105228867");
+    expect(whatsappLink(SHOP_CONTACT.phone)).toBe("https://wa.me/27615228867");
   });
 
   it("keeps the shop address", () => {

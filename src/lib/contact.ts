@@ -1,7 +1,7 @@
 /** Shop contact details shown to shoppers. The phone number doubles as the WhatsApp line. */
 export const SHOP_CONTACT = {
   addressLines: ["56 Augrabies Street", "71 Stone Forest", "Mooikloof Ridge Estate", "0081"],
-  phone: "06105228867",
+  phone: "0615228867",
 } as const;
 
 /** Turns a South African local number (0…) into a wa.me chat link (+27…). */
