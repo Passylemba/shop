@@ -38,7 +38,22 @@ async function loadCatalog() {
   };
 }
 
-export const getStorefront = createServerFn({ method: "GET" }).handler(() => loadCatalog());
+/** Public: shop data. Photos in the private bucket get short-lived view links for active products only. */
+export const getStorefront = createServerFn({ method: "GET" }).handler(async () => {
+  const catalog = await loadCatalog();
+  const paths = catalog.products.map((p) => p.image_path).filter((x): x is string => !!x);
+  if (paths.length === 0) return catalog;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.storage.from("product-photos").createSignedUrls(paths, 60 * 60 * 24);
+  const links = new Map((data ?? []).filter((d) => d.signedUrl && d.path).map((d) => [d.path!, d.signedUrl]));
+  return {
+    ...catalog,
+    // Shoppers cannot sign photo links themselves; hand them the link instead of the storage path.
+    products: catalog.products.map((p) =>
+      p.image_path ? { ...p, image_url: links.get(p.image_path) ?? null, image_path: null } : p,
+    ),
+  };
+});
 
 const orderSchema = z.object({
   customer_name: z.string().trim().min(2, "Please enter your name").max(100),
